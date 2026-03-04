@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_firebase_task_manager/features/auth/presentation/providers/auth_provider.dart';
-import 'package:flutter_firebase_task_manager/features/auth/presentation/pages/login_page.dart';
+
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/task_provider.dart';
+import '../widgets/add_task_dialog.dart';
+import '../widgets/task_tile.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,39 +15,71 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    super.initState();
+
+    final auth = context.read<AuthProvider>();
+    final taskProvider = context.read<TaskProvider>();
+
+    taskProvider.listenTasks(auth.user!.uid);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Accessing the AuthProvider using the provider package
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('This is Home Page'),
+        title: const Text("TaskFlow"),
         actions: [
           IconButton(
-            onPressed: () async {
-              // Calling the logout method from your provider
-              await auth.logout();
-
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                  (route) => false,
-                );
-              }
-            },
             icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await auth.logout();
+            },
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Welcome, ${auth.user?.email ?? "User"}'),
-            if (auth.isLoading) const CircularProgressIndicator(),
-          ],
-        ),
-      ),
+      body: const TaskListSection(),
+      floatingActionButton: const AddTaskButton(),
+    );
+  }
+}
+
+class TaskListSection extends StatelessWidget {
+  const TaskListSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<TaskProvider>(
+      builder: (context, taskProvider, _) {
+        if (taskProvider.tasks.isEmpty) {
+          return const Center(child: Text("No tasks yet"));
+        }
+
+        return ListView.builder(
+          itemCount: taskProvider.tasks.length,
+          itemBuilder: (context, index) {
+            final task = taskProvider.tasks[index];
+
+            return TaskTile(task: task);
+          },
+        );
+      },
+    );
+  }
+}
+
+class AddTaskButton extends StatelessWidget {
+  const AddTaskButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () {
+        showDialog(context: context, builder: (_) => const AddTaskDialog());
+      },
+      child: const Icon(Icons.add),
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'features/auth/data/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/tasks/domain/repositories/task_repositories.dart';
+import 'features/tasks/presentation/providers/task_provider.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -24,6 +26,9 @@ class _MyAppState extends State<MyApp> {
         ),
         ChangeNotifierProvider(
           create: (context) => AuthProvider(context.read<AuthRepository>()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => TaskProvider(context.read<TaskRepository>()),
         ),
       ],
       child: MaterialApp(home: AuthGate()),
